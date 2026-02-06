@@ -1,6 +1,7 @@
 #ifndef NODE_FREERDP_RDP_H
 #define NODE_FREERDP_RDP_H
 
+#include <stdint.h>
 #include <nan.h>
 #include <freerdp/freerdp.h>
 
