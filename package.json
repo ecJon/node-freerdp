@@ -9,16 +9,17 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "install": "node install.js",
-    "rebuild": "node-gyp rebuild"
+    "rebuild": "node-gyp rebuild",
+    "prepublishOnly": "npm run rebuild"
   },
   "author": "Michael Wasser",
   "license": "BSD",
   "gypfile": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/ecJon/node-freerdp.git"
+    "url": "https://github.com/ecjon/node-freerdp.git"
   },
-  "homepage": "https://github.com/ecJon/node-freerdp",
+  "homepage": "https://github.com/ecjon/node-freerdp",
   "dependencies": {
     "nan": "^2.18.0",
     "bindings": "^1.5.0"
@@ -29,7 +30,7 @@
   "binary": {
     "module_name": "node-freerdp",
     "module_path": "./build/Release",
-    "host": "https://github.com/ecJon/node-freerdp/releases/download/",
+    "host": "https://github.com/ecjon/node-freerdp/releases/download/",
     "remote_path": "v{version}",
     "package_name": "node-freerdp-{platform}-{arch}.tar.gz"
   },
@@ -48,5 +49,17 @@
   "cpu": [
     "x64",
     "arm64"
-  ]
+  ],
+  "files": [
+    "binding.gyp",
+    "install.js",
+    "index.js",
+    "README.md",
+    "INSTALL.md",
+    "*.cc",
+    "*.h"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }
