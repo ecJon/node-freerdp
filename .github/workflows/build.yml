@@ -321,88 +321,106 @@ jobs:
           path: dist/node-freerdp-linux-x64.tar.gz
 
   build-linux-arm:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-arm64
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Build in Docker
+      - name: Install dependencies
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            -w /workspace \
-            --platform linux/arm64 \
-            ubuntu:22.04 \
-            bash -c "
-              apt-get update && \
-              apt-get install -y build-essential g++ git cmake libssl-dev curl libc6-dev linux-libc-dev && \
-              curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-              apt-get install -y nodejs && \
-              git clone --branch 3.22.0 --depth 1 https://github.com/FreeRDP/FreeRDP.git && \
-              cd FreeRDP && mkdir build && cd build && \
-              cmake .. \
-                -DCMAKE_BUILD_TYPE=Release \
-                -DCMAKE_INSTALL_PREFIX=/workspace/freerdp-static \
-                -DBUILD_SHARED_LIBS=OFF \
-                -DBUILD_TESTING=OFF \
-                -DWITH_SERVER=OFF \
-                -DWITH_CLIENT=ON \
-                -DWITH_SAMPLE=OFF \
-                -DWITH_CLIENT_SDL=OFF \
-                -DWITH_X11=OFF \
-                -DWITH_CUPS=OFF \
-                -DWITH_PCSC=OFF \
-                -DWITH_PKCS11=OFF \
-                -DWITH_SMARTCARD_EMULATE=OFF \
-                -DWITH_SMARTCARD_PCSC=OFF \
-                -DWITH_FFMPEG=OFF \
-                -DWITH_SWSCALE=OFF \
-                -DWITH_GFX_H264=OFF \
-                -DWITH_VIDEO_FFMPEG=OFF \
-                -DWITH_DSP_FFMPEG=OFF \
-                -DWITH_JPEG=OFF \
-                -DWITH_WEBVIEW=OFF \
-                -DWITH_AAD=OFF \
-                -DWITH_LODEPNG=OFF \
-                -DWITH_DEBUG_ALL=OFF \
-                -DWITH_SDL=OFF \
-                -DWITH_OPUS=OFF \
-                -DWITH_OPENSSL=ON && \
-              make -j\$(nproc) && \
-              make install && \
-              cd /workspace && \
-              cat > binding.gyp << 'GYP_EOF'
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            git \
+            cmake \
+            libssl-dev
+
+      - name: Build FreeRDP static
+        run: |
+          git clone --branch 3.22.0 --depth 1 https://github.com/FreeRDP/FreeRDP.git
+          cd FreeRDP
+          mkdir build && cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/freerdp-static \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DBUILD_TESTING=OFF \
+            -DWITH_SERVER=OFF \
+            -DWITH_CLIENT=ON \
+            -DWITH_SAMPLE=OFF \
+            -DWITH_CLIENT_SDL=OFF \
+            -DWITH_X11=OFF \
+            -DWITH_CUPS=OFF \
+            -DWITH_PCSC=OFF \
+            -DWITH_PKCS11=OFF \
+            -DWITH_SMARTCARD_EMULATE=OFF \
+            -DWITH_SMARTCARD_PCSC=OFF \
+            -DWITH_FFMPEG=OFF \
+            -DWITH_SWSCALE=OFF \
+            -DWITH_GFX_H264=OFF \
+            -DWITH_VIDEO_FFMPEG=OFF \
+            -DWITH_DSP_FFMPEG=OFF \
+            -DWITH_JPEG=OFF \
+            -DWITH_WEBVIEW=OFF \
+            -DWITH_AAD=OFF \
+            -DWITH_LODEPNG=OFF \
+            -DWITH_DEBUG_ALL=OFF \
+            -DWITH_SDL=OFF \
+            -DWITH_OPUS=OFF \
+            -DWITH_OPENSSL=ON
+          make -j$(nproc)
+          make install
+
+      - name: Update binding.gyp for Linux ARM64
+        run: |
+          cat > binding.gyp << 'EOF'
           {
-              \"targets\": [{
-                  \"target_name\": \"node-freerdp\",
-                  \"sources\": [\"context.cc\", \"generator.cc\", \"rdp.cc\", \"bridge.cc\", \"node-freerdp.cc\"],
-                  \"include_dirs\": [
-                      \"<!(node -e \\\"require('nan')\\\")\",
-                      \"/workspace/freerdp-static/include/freerdp3\",
-                      \"/workspace/freerdp-static/include/winpr3\"
+              "targets": [{
+                  "target_name": "node-freerdp",
+                  "sources": ["context.cc", "generator.cc", "rdp.cc", "bridge.cc", "node-freerdp.cc"],
+                  "include_dirs": [
+                      "<!(node -e \"require('nan')\")",
+                      "${{ github.workspace }}/freerdp-static/include/freerdp3",
+                      "${{ github.workspace }}/freerdp-static/include/winpr3"
                   ],
-                  \"libraries\": [
-                      \"/workspace/freerdp-static/lib/libfreerdp-client3.a\",
-                      \"/workspace/freerdp-static/lib/libfreerdp3.a\",
-                      \"/workspace/freerdp-static/lib/libwinpr3.a\",
-                      \"-lssl\", \"-lcrypto\", \"-lz\", \"-lpthread\", \"-lm\", \"-lrt\"
+                  "libraries": [
+                      "${{ github.workspace }}/freerdp-static/lib/libfreerdp-client3.a",
+                      "${{ github.workspace }}/freerdp-static/lib/libfreerdp3.a",
+                      "${{ github.workspace }}/freerdp-static/lib/libwinpr3.a",
+                      "-lssl", "-lcrypto", "-lz", "-lpthread", "-lm", "-lrt"
                   ]
               }]
           }
-          GYP_EOF
-              npm install --ignore-scripts && \
-              cd /workspace && npx node-gyp rebuild && \
-              mkdir -p dist/linux-arm64 && \
-              cp build/Release/node-freerdp.node dist/linux-arm64/ && \
-              cd dist/linux-arm64 && \
-              echo '{\"name\":\"node-freerdp\",\"version\":\"${{ github.ref_name }}\",\"os\":\"linux\",\"arch\":\"arm64\",\"main\":\"node-freerdp.node\"}' > package.json && \
-              tar czf /workspace/node-freerdp-linux-arm64.tar.gz .
-            "
+          EOF
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build node addon
+        run: |
+          npm install --ignore-scripts
+          npx node-gyp rebuild
+
+      - name: Create package
+        run: |
+          mkdir -p dist/linux-arm64
+          cp build/Release/node-freerdp.node dist/linux-arm64/
+          cp README.md dist/linux-arm64/ 2>/dev/null || true
+          cd dist/linux-arm64
+          cat > package.json << 'EOF'
+          {
+            "name": "node-freerdp",
+            "version": "${{ github.ref_name }}",
+            "os": "linux",
+            "arch": "arm64",
+            "main": "node-freerdp.node"
+          }
+          EOF
+          tar czf ../node-freerdp-linux-arm64.tar.gz .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
