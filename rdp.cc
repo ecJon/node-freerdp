@@ -3,6 +3,7 @@
 #endif
 
 #ifndef _WIN32
+#include <stdint.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/select.h>

@@ -12,8 +12,7 @@
             "include_dirs": [
                 "<!(node -e \"require('nan')\")",
                 "/Users/ecjon/freerdp-static/include/freerdp3",
-                "/Users/ecjon/freerdp-static/include/winpr3",
-                "/Library/Developer/CommandLineTools/SDKs/MacOSX15.5.sdk/usr/include/c++/v1"
+                "/Users/ecjon/freerdp-static/include/winpr3"
             ],
             "libraries": [
                 "/Users/ecjon/freerdp-static/lib/libfreerdp-client3.a",

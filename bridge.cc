@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <nan.h>
 
 #include "bridge.h"
