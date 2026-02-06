@@ -1,7 +1,7 @@
 #ifndef NODE_FREERDP_CONTEXT_H
 #define NODE_FREERDP_CONTEXT_H
 
-#include <cstdint>
+#include <stdint.h>
 #include <freerdp/freerdp.h>
 
 #include "generator.h"
