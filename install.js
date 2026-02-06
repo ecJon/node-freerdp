@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 
 const https = require('https');
-const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const tar = require('tar');
 const { execSync } = require('child_process');
+const zlib = require('zlib');
 
 const pkg = require('./package.json');
 
@@ -46,14 +45,13 @@ console.log(`URL: ${downloadUrl}`);
 const buildDir = path.join(__dirname, 'build', 'Release');
 fs.mkdirSync(buildDir, { recursive: true });
 
-const tempFile = path.join(__dirname, `${packageName}`);
+const tempFile = path.join(__dirname, `temp-${packageName}`);
 
 function downloadFile(url, dest) {
   return new Promise((resolve, reject) => {
-    const protocol = url.startsWith('https') ? https : http;
     const file = fs.createWriteStream(dest);
 
-    protocol.get(url, (response) => {
+    https.get(url, (response) => {
       if (response.statusCode === 302 || response.statusCode === 301) {
         downloadFile(response.headers.location, dest).then(resolve).catch(reject);
         return;
@@ -93,35 +91,80 @@ function downloadFile(url, dest) {
   });
 }
 
+function extractTarGzip(gzPath, dest) {
+  return new Promise((resolve, reject) => {
+    const unzip = zlib.createUnzip();
+    const chunks = [];
+
+    fs.createReadStream(gzPath)
+      .pipe(unzip)
+      .on('data', (chunk) => chunks.push(chunk))
+      .on('end', () => {
+        const tarBuffer = Buffer.concat(chunks);
+        // Simple tar extraction for our specific structure
+        let pos = 0;
+
+        function readTarEntry() {
+          if (pos >= tarBuffer.length - 1024) {
+            resolve();
+            return;
+          }
+
+          // Read header (512 bytes)
+          const header = tarBuffer.slice(pos, pos + 512);
+          pos += 512;
+
+          // Check for end marker
+          if (header[0] === 0) {
+            resolve();
+            return;
+          }
+
+          // Read file name (null-terminated)
+          let nameEnd = 0;
+          while (nameEnd < 100 && header[nameEnd] !== 0) nameEnd++;
+          const fileName = header.toString('ascii', 0, nameEnd);
+
+          // Read size (octal)
+          let sizeEnd = 124;
+          while (sizeEnd < 124 + 12 && header[sizeEnd] !== 0) sizeEnd++;
+          const size = parseInt(header.toString('ascii', 124, sizeEnd), 8);
+
+          // Skip to next 512-byte boundary
+          const dataStart = pos;
+          const dataEnd = pos + size;
+          const paddedEnd = Math.ceil(size / 512) * 512;
+          pos = dataStart + paddedEnd;
+
+          // Extract .node file
+          if (fileName.endsWith('node-freerdp.node')) {
+            const fileData = tarBuffer.slice(dataStart, dataEnd);
+            const outputPath = path.join(dest, 'node-freerdp.node');
+            fs.writeFileSync(outputPath, fileData);
+            console.log(`Extracted: node-freerdp.node (${size} bytes)`);
+          }
+
+          readTarEntry();
+        }
+
+        readTarEntry();
+      })
+      .on('error', reject);
+  });
+}
+
 async function install() {
   try {
     await downloadFile(downloadUrl, tempFile);
+    await extractTarGzip(tempFile, buildDir);
 
-    console.log('Extracting...');
-    await tar.x({
-      file: tempFile,
-      cwd: buildDir,
-      strip: 0
-    });
-
-    // Move the .node file to the correct location
-    const extractedDir = path.join(buildDir, path.basename(packageName, '.tar.gz'));
-    const nodeFile = path.join(extractedDir, 'node-freerdp.node');
-    const targetFile = path.join(buildDir, 'node-freerdp.node');
-
-    if (fs.existsSync(nodeFile)) {
-      fs.copyFileSync(nodeFile, targetFile);
-      // Cleanup
-      fs.unlinkSync(tempFile);
-      fs.rmSync(extractedDir, { recursive: true, force: true });
-      console.log('Installation complete!');
-    } else {
-      throw new Error('node-freerdp.node not found in archive');
-    }
+    // Cleanup
+    fs.unlinkSync(tempFile);
+    console.log('Installation complete!');
   } catch (err) {
     console.log(`\nDownload failed: ${err.message}`);
     console.log('Falling back to building from source...');
-    fs.unlinkSync(tempFile);
+    if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
     buildFromSource();
   }
 }

@@ -21,9 +21,7 @@
   "homepage": "https://github.com/ecJon/node-freerdp",
   "dependencies": {
     "nan": "^2.18.0",
-    "bindings": "^1.5.0",
-    "node-fetch": "^2.7.0",
-    "tar": "^6.2.0"
+    "bindings": "^1.5.0"
   },
   "devDependencies": {
     "node-gyp": "^10.0.0"
