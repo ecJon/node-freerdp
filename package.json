@@ -1,28 +1,54 @@
 {
-  "name": "freerdp",
-  "version": "0.3.0",
-  "description": "Node.js bindings for FreeRDP 3.x - Connect to RDP servers with Node.js",
+  "name": "@ecjon/node-freerdp",
+  "version": "0.4.0",
+  "description": "Node.js bindings for FreeRDP 3.x with static linking - Connect to RDP servers",
   "main": "index.js",
   "engines": {
-    "node": ">= 10.0.0"
+    "node": ">= 14.0.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "install": "node-gyp rebuild"
+    "install": "node install.js",
+    "rebuild": "node-gyp rebuild"
   },
   "author": "Michael Wasser",
   "license": "BSD",
   "gypfile": true,
-  "repository" : {
-    "type" : "git",
-    "url" : "https://github.com/bloomapi/node-freerdp.git"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ecJon/node-freerdp.git"
   },
+  "homepage": "https://github.com/ecJon/node-freerdp",
   "dependencies": {
     "nan": "^2.18.0",
-    "bindings": "^1.5.0"
+    "bindings": "^1.5.0",
+    "node-fetch": "^2.7.0",
+    "tar": "^6.2.0"
   },
   "devDependencies": {
-    "node-gyp": "^10.0.0",
-    "canvas": "^2.11.0"
-  }
+    "node-gyp": "^10.0.0"
+  },
+  "binary": {
+    "module_name": "node-freerdp",
+    "module_path": "./build/Release",
+    "host": "https://github.com/ecJon/node-freerdp/releases/download/",
+    "remote_path": "v{version}",
+    "package_name": "node-freerdp-{platform}-{arch}.tar.gz"
+  },
+  "keywords": [
+    "rdp",
+    "freerdp",
+    "remote desktop",
+    "rdp client",
+    "windows remote desktop"
+  ],
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ]
 }
