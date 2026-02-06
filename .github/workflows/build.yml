@@ -507,13 +507,13 @@ jobs:
             "main": "node-freerdp.node"
           }
           "@ | Out-File -encoding ASCII dist\win32-x64\package.json
-          Compress-Archive -Path dist\win32-x64\* -DestinationPath node-freerdp-win32-x64.zip
+          tar -czf node-freerdp-win32-x64.tar.gz -C dist\win32-x64 .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-freerdp-win32-x64
-          path: node-freerdp-win32-x64.zip
+          path: node-freerdp-win32-x64.tar.gz
 
   release:
     needs: [build-mac-x64, build-mac-arm, build-linux-x64, build-linux-arm, build-windows-x64]
@@ -532,7 +532,7 @@ jobs:
             artifacts/node-freerdp-macos-arm64/*.tar.gz
             artifacts/node-freerdp-linux-x64/*.tar.gz
             artifacts/node-freerdp-linux-arm64/*.tar.gz
-            artifacts/node-freerdp-win32-x64/*.zip
+            artifacts/node-freerdp-win32-x64/*.tar.gz
           draft: false
           prerelease: false
           generate_release_notes: true
