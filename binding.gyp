@@ -9,29 +9,76 @@
               "bridge.cc",
               "node-freerdp.cc"
             ],
-            "libraries": [
-              "-L/Users/ecjon/freerdp-install/lib",
-              "-lfreerdp-client3",
-              "-lfreerdp3",
-              "-lwinpr3"
+            "include_dirs": [
+                "<!(node -e \"require('nan')\")",
+                "/Users/ecjon/freerdp-static/include/freerdp3",
+                "/Users/ecjon/freerdp-static/include/winpr3",
+                "/Library/Developer/CommandLineTools/SDKs/MacOSX15.5.sdk/usr/include/c++/v1"
             ],
-            "include_dirs" : [
-        "<!(node -e \"require('nan')\")",
-        "/Users/ecjon/freerdp-install/include/freerdp3",
-        "/Users/ecjon/freerdp-install/include/winpr3",
-        "/Library/Developer/CommandLineTools/SDKs/MacOSX15.5.sdk/usr/include/c++/v1"
-      ],
+            "libraries": [
+                "/Users/ecjon/freerdp-static/lib/libfreerdp-client3.a",
+                "/Users/ecjon/freerdp-static/lib/libfreerdp3.a",
+                "/Users/ecjon/freerdp-static/lib/libwinpr3.a"
+            ],
             "cflags+": ["-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX15.5.sdk"],
             "cflags_cc+": ["-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX15.5.sdk"],
             "ldflags+": ["-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX15.5.sdk"],
             "conditions": [
-              ["OS=='mac'", {
-                "xcode_settings": {
-                  "DYLIB_INSTALL_NAME_BASE": "@rpath",
-                  "LD_RUNPATH_SEARCH_PATHS": ["/Users/ecjon/freerdp-install/lib"]
-                }
-              }]
+                ["OS=='mac'", {
+                    "libraries": [
+                        "-framework Security",
+                        "-framework CoreFoundation",
+                        "-framework CoreServices",
+                        "-framework CoreGraphics",
+                        "-framework CoreText",
+                        "-framework ApplicationServices",
+                        "-framework Carbon",
+                        "-framework IOKit",
+                        "/opt/homebrew/opt/openssl@3/lib/libssl.a",
+                        "/opt/homebrew/opt/openssl@3/lib/libcrypto.a",
+                        "-lz",
+                        "-lpthread",
+                        "-lm"
+                    ],
+                    "xcode_settings": {
+                        "OTHER_LDFLAGS": [
+                            "-framework Security",
+                            "-framework CoreFoundation",
+                            "-framework CoreServices",
+                            "-framework CoreGraphics",
+                            "-framework CoreText",
+                            "-framework ApplicationServices",
+                            "-framework Carbon",
+                            "-framework IOKit"
+                        ]
+                    }
+                }],
+                ["OS=='linux'", {
+                    "libraries": [
+                        "-lssl",
+                        "-lcrypto",
+                        "-lz",
+                        "-lpthread",
+                        "-lm",
+                        "-lrt"
+                    ]
+                }],
+                ["OS=='win'", {
+                    "libraries": [
+                        "libssl.lib",
+                        "libcrypto.lib",
+                        "crypt32.lib",
+                        "secur32.lib"
+                    ],
+                    "msvs_settings": {
+                        "VCLinkerTool": {
+                            "AdditionalLibraryDirectories": [
+                                "$(SolutionDir)libs\\win32"
+                            ]
+                        }
+                    }
+                }]
             ]
         }
-    ],
+    ]
 }

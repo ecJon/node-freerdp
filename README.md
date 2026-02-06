@@ -3,61 +3,7 @@ Node-FreeRDP
 
 Node.js addon for FreeRDP 3.x - Connect to RDP servers with Node.js.
 
-> **Note**: This project has been updated to use FreeRDP 3.x API. The original API using `new freerdp.Session()` has been changed to use a callback-based generator pattern.
-
-## Dependencies
-
-This requires **FreeRDP 3.x** to be installed on your system.
-
-### Installing FreeRDP 3.x
-
-#### macOS
-
-```bash
-# Option 1: Build from source
-cd ~/Documents
-git clone https://github.com/FreeRDP/FreeRDP.git
-cd FreeRDP
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release \
-         -DCMAKE_INSTALL_PREFIX=/usr/local \
-         -DWITH_X11=OFF \
-         -DBUILD_TESTING=OFF \
-         -DWITH_SERVER=OFF \
-         -DWITH_CLIENT=ON
-make -j$(sysctl -n hw.ncpu)
-sudo make install
-
-# Option 2: Using Homebrew (may have older version)
-brew install freerdp
-```
-
-#### Ubuntu/Debian
-
-```bash
-# Ubuntu 22.04+ has FreeRDP 3.x
-sudo apt update
-sudo apt install freerdp3-dev libwinpr3-dev
-```
-
-#### Fedora
-
-```bash
-sudo dnf install freerdp-devel winpr-devel
-```
-
-#### Windows
-
-Download pre-built binaries from [FreeRDP GitHub Releases](https://github.com/FreeRDP/FreeRDP/releases) or build from source using Visual Studio.
-
-## Installation
-
-```bash
-git clone https://github.com/bloomapi/node-freerdp.git
-cd node-freerdp
-npm install
-npm run install  # Runs node-gyp rebuild
-```
+> **Static Linked Version**: This version uses static linking - all FreeRDP dependencies are bundled in the `.node` file. Users don't need to install FreeRDP separately!
 
 ## Features
 
@@ -67,8 +13,68 @@ npm run install  # Runs node-gyp rebuild
 - Send mouse events (move, click)
 - Support for NLA (Network Level Authentication)
 - Graphics acceleration (GFX) support
+- **No external dependencies** - FreeRDP statically linked
 
-> **Note**: Clipboard functionality is currently disabled and needs to be rewritten for FreeRDP 3.x API.
+## Installation
+
+```bash
+git clone https://github.com/ecJon/node-freerdp.git
+cd node-freerdp
+npm install
+npm run install  # Runs node-gyp rebuild
+```
+
+### Building from Source (for contributors)
+
+If you want to build with your own FreeRDP static libraries:
+
+1. **Build FreeRDP static libraries**:
+
+```bash
+cd ~/Documents/code/FreeRDP
+mkdir build-static && cd build-static
+
+cmake .. \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=~/freerdp-static \
+  -DBUILD_SHARED_LIBS=OFF \
+  -DBUILD_TESTING=OFF \
+  -DWITH_SERVER=OFF \
+  -DWITH_CLIENT=ON \
+  -DWITH_SAMPLE=OFF \
+  -DWITH_CLIENT_SDL=OFF \
+  -DWITH_CLIENT_MAC=OFF \
+  -DWITH_X11=OFF \
+  -DWITH_CUPS=OFF \
+  -DWITH_PCSC=OFF \
+  -DWITH_PKCS11=OFF \
+  -DWITH_SMARTCARD_EMULATE=OFF \
+  -DWITH_SMARTCARD_PCSC=OFF \
+  -DWITH_FFMPEG=OFF \
+  -DWITH_SWSCALE=OFF \
+  -DWITH_GFX_H264=OFF \
+  -DWITH_VIDEO_FFMPEG=OFF \
+  -DWITH_DSP_FFMPEG=OFF \
+  -DWITH_JPEG=OFF \
+  -DWITH_WEBVIEW=OFF \
+  -DWITH_AAD=OFF \
+  -DWITH_LODEPNG=OFF \
+  -DWITH_DEBUG_ALL=OFF \
+  -DWITH_SDL=OFF \
+  -DWITH_OPUS=OFF \
+  -DWITH_OPENSSL=ON
+
+make -j$(sysctl -n hw.ncpu)
+make install
+```
+
+2. **Update binding.gyp** to point to your static library path.
+
+3. **Build the module**:
+
+```bash
+npm run install
+```
 
 ## API Usage
 
@@ -114,8 +120,8 @@ console.log('Session ID:', session);
 ```javascript
 // Send scancode (e.g., 'A' key)
 const scancode = 0x1e;  // Scancode for 'A'
-freerdp.sendKey(session, scancode, 1);  // Press
-freerdp.sendKey(session, scancode, 0);  // Release
+freerdp.sendKeyEventScancode(session, scancode, 1);  // Press
+freerdp.sendKeyEventScancode(session, scancode, 0);  // Release
 ```
 
 Common scancodes:
@@ -140,10 +146,10 @@ const flags = {
 };
 
 // Move mouse
-freerdp.sendPointer(session, flags.PTR_FLAGS_MOVE, x, y);
+freerdp.sendPointerEvent(session, flags.PTR_FLAGS_MOVE, x, y);
 
 // Left click
-freerdp.sendPointer(session, flags.PTR_FLAGS_DOWN | flags.PTR_FLAGS_BUTTON1, x, y);
+freerdp.sendPointerEvent(session, flags.PTR_FLAGS_DOWN | flags.PTR_FLAGS_BUTTON1, x, y);
 ```
 
 ### Close Connection
@@ -171,17 +177,33 @@ FreeRDP command line arguments are supported. Common options:
 
 For full argument list, see [FreeRDP Documentation](https://freerdp.com/freerdp-user/Manual).
 
-## Building from Source
+## Static Linking Details
 
-If you need to modify the native code:
+The `.node` file is statically linked with:
+- FreeRDP 3.x (libfreerdp3.a, libfreerdp-client3.a)
+- WinPR 3.x (libwinpr3.a)
+- OpenSSL (libssl.a, libcrypto.a)
 
-```bash
-# Clean previous build
-rm -rf build
+Final binary size: ~8MB (contains all dependencies)
 
-# Rebuild
-npm run install
-```
+Users only need system frameworks (no FreeRDP installation required):
+- **macOS**: Security, CoreFoundation, CoreServices, CoreGraphics, Carbon, etc.
+- **Linux**: ssl, crypto, z, pthread, rt
+- **Windows**: openssl libs, crypt32, secur32
+
+## Electron Integration
+
+For Electron apps, the static-linked `.node` file works out of the box:
+
+1. Place `node-freerdp.node` in your app resources
+2. Rebuild for Electron's Node version:
+   ```bash
+   npm install --runtime=electron --dist-url=https://electronjs.org/headers
+   ```
+3. Load in your Electron app:
+   ```javascript
+   const freerdp = require('./path/to/node-freerdp.node');
+   ```
 
 ## Roadmap
 
@@ -190,6 +212,7 @@ npm run install
 - [ ] Memory leak investigation
 - [ ] Funnel libfreerdp stdout messages to events
 - [ ] TypeScript definitions
+- [ ] Prebuilt binaries for multiple platforms (Linux x64/arm64, Windows x64/arm64)
 
 ## License
 
@@ -201,4 +224,4 @@ Michael Wasser
 
 ## Maintainers
 
-This project was originally created for FreeRDP 1.x and has been updated to support FreeRDP 3.x.
+This project was originally created for FreeRDP 1.x and has been updated to support FreeRDP 3.x with static linking.
