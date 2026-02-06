@@ -71,8 +71,8 @@ jobs:
 
       - name: Build node addon
         run: |
-          npm install
-          npm run install
+          npm install --ignore-scripts
+          npx node-gyp rebuild
 
       - name: Create package
         run: |
@@ -158,8 +158,8 @@ jobs:
 
       - name: Build node addon
         run: |
-          npm install
-          npm run install
+          npm install --ignore-scripts
+          npx node-gyp rebuild
 
       - name: Create package
         run: |
@@ -294,8 +294,8 @@ jobs:
 
       - name: Build node addon
         run: |
-          npm install
-          npm run install
+          npm install --ignore-scripts
+          npx node-gyp rebuild
 
       - name: Create package
         run: |
@@ -490,8 +490,8 @@ jobs:
 
       - name: Build node addon
         run: |
-          npm install
-          npm run install
+          npm install --ignore-scripts
+          npx node-gyp rebuild
 
       - name: Create package
         run: |
