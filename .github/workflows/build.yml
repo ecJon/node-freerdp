@@ -396,7 +396,7 @@ jobs:
           }
           GYP_EOF
               npm install --ignore-scripts && \
-              npx node-gyp rebuild && \
+              cd /workspace && npx node-gyp rebuild && \
               mkdir -p dist/linux-arm64 && \
               cp build/Release/node-freerdp.node dist/linux-arm64/ && \
               cd dist/linux-arm64 && \
