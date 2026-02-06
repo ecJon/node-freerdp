@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  FREEBSD_VERSION: 3.22.1
+  FREERDP_VERSION: 3.22.0
 
 jobs:
   build-mac-x64:
@@ -24,7 +24,7 @@ jobs:
 
       - name: Build FreeRDP static
         run: |
-          git clone --depth 1 https://github.com/FreeRDP/FreeRDP.git
+          git clone --branch 3.22.0 --depth 1 https://github.com/FreeRDP/FreeRDP.git
           cd FreeRDP
           mkdir build && cd build
           cmake .. \
@@ -111,7 +111,7 @@ jobs:
 
       - name: Build FreeRDP static
         run: |
-          git clone --depth 1 https://github.com/FreeRDP/FreeRDP.git
+          git clone --branch 3.22.0 --depth 1 https://github.com/FreeRDP/FreeRDP.git
           cd FreeRDP
           mkdir build && cd build
           cmake .. \
@@ -213,7 +213,7 @@ jobs:
 
       - name: Build FreeRDP static
         run: |
-          git clone --depth 1 https://github.com/FreeRDP/FreeRDP.git
+          git clone --branch 3.22.0 --depth 1 https://github.com/FreeRDP/FreeRDP.git
           cd FreeRDP
           mkdir build && cd build
           cmake .. \
@@ -341,7 +341,7 @@ jobs:
             bash -c "
               apt-get update && \
               apt-get install -y build-essential git cmake libssl-dev nodejs npm && \
-              git clone --depth 1 https://github.com/FreeRDP/FreeRDP.git && \
+              git clone --branch 3.22.0 --depth 1 https://github.com/FreeRDP/FreeRDP.git && \
               cd FreeRDP && mkdir build && cd build && \
               cmake .. \
                 -DCMAKE_BUILD_TYPE=Release \
@@ -423,7 +423,7 @@ jobs:
 
       - name: Build FreeRDP static
         run: |
-          git clone --depth 1 https://github.com/FreeRDP/FreeRDP.git
+          git clone --branch 3.22.0 --depth 1 https://github.com/FreeRDP/FreeRDP.git
           cd FreeRDP
           mkdir build
           cd build
