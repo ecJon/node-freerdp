@@ -430,6 +430,7 @@ jobs:
 
   build-windows-x64:
     runs-on: windows-2019
+    if: false  # Disabled: FreeRDP 3.x Windows support is unmaintained
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -536,7 +537,7 @@ jobs:
           path: node-freerdp-win32-x64.tar.gz
 
   release:
-    needs: [build-mac-x64, build-mac-arm, build-linux-x64, build-linux-arm, build-windows-x64]
+    needs: [build-mac-x64, build-mac-arm, build-linux-x64, build-linux-arm]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
@@ -552,7 +553,6 @@ jobs:
             artifacts/node-freerdp-macos-arm64/*.tar.gz
             artifacts/node-freerdp-linux-x64/*.tar.gz
             artifacts/node-freerdp-linux-arm64/*.tar.gz
-            artifacts/node-freerdp-win32-x64/*.tar.gz
           draft: false
           prerelease: false
           generate_release_notes: true
